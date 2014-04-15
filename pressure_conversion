@@ -1,0 +1,21 @@
+Function Pressure_convert(number, unit_type, from_unit, to_unit)    'This function works by using the top number to convert to psi and the bottom number to convert to the unit you want
+    If unit_type = "pressure" Then
+        If from_unit = "psi" Then
+            Top = 1
+        Else
+            If from_unit = "bar" Then
+            Top = 14.5033    'represents the variable the input number will be multiplied by
+            End If
+        End If
+        If to_unit = "psi" Then
+        bottom = 1                          'represents the variable the input number will be divided by
+        Else
+            If to_unit = "bar" Then
+            bottom = 14.5033
+            End If
+        End If
+    End If
+    Pressure = number * Top / bottom
+    Pressure_convert = Pressure
+        
+End Function
