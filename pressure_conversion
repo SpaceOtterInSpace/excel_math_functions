@@ -1,4 +1,4 @@
-Function Pressure_convert(number, unit_type, from_unit, to_unit)    'This function works by using the top number to convert to psi and the bottom number to convert to the unit you want
+Function unit_convert(number, unit_type, from_unit, to_unit)    'This function works by using the top number to convert to psi and the bottom number to convert to the unit you want
     If unit_type = "pressure" Then
         If from_unit = "psi" Then
             Top = 1
@@ -14,8 +14,40 @@ Function Pressure_convert(number, unit_type, from_unit, to_unit)    'This functi
             bottom = 14.5033
             End If
         End If
+        Pressure = number * Top / bottom
+        unit_convert = Pressure
     End If
-    Pressure = number * Top / bottom
-    Pressure_convert = Pressure
+    
+    If unit_type = "specific heat (cp)" Then
+        If from_unit = "Btu/lbmF" Then
+            Top = 1
+        Else
+            If from_unit = "kJ/kgK" Then
+                Top = 1 / 4.1868
+            Else
+                If from_unit = "kcal/kgC" Then
+                Top = 1
+                End If
+            End If
+        End If
+        If to_unit = "Btu/lbmF" Then
+            bottom = 1
+            Else
+            If to_unit = "kJ/kgK" Then
+                bottom = 1 / 4.1868
+            Else
+                If to_unit = "kcal/kgC" Then
+                bottom = 1
+                End If
+            End If
+        End If
+        specific_heat = number * Top / bottom
+        unit_convert = specific_heat
+    End If
+        
+                
+        
+    
+    
         
 End Function
