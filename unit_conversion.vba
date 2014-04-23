@@ -1,13 +1,19 @@
-Function unit_convert(number, unit_type, from_unit, to_unit)    'This function works by using the top number to convert to the first variable and the bottom number to convert to the unit you want
-    
+FFunction unit_convert(number, unit_type, from_unit, to_unit)    'This function works by using the top number to convert to the first variable and the bottom number to convert to the unit you want
+   
     'pressure
     If unit_type = "pressure" Then
         u1 = "psi"
         v1 = 1
         u2 = "bar"
         v2 = 14.5033
-        v3 = 0
-        u3 = 0
+        u3 = "Pa"
+        v3 = 0.000145037738
+        u4 = "kPa"
+        v4 = 0.145037738
+        u5 = "inH2O"
+        v5 = 0.0361396333
+        u6 = "ftH2O"
+        v6 = 0.4335275
     Else
             'specific heat
         If unit_type = "specific heat (cp)" Then
@@ -95,16 +101,5 @@ Function unit_convert(number, unit_type, from_unit, to_unit)    'This function w
     End If
     
     unit_convert = number * Top / bottom
-
-    
-
-            
-    
-    
-    
-                
-        
-    
-    
-        
+      
 End Function
