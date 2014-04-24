@@ -1,5 +1,6 @@
-FFunction unit_convert(number, unit_type, from_unit, to_unit)    'This function works by using the top number to convert to the first variable and the bottom number to convert to the unit you want
+Function unit_convert(number, unit_type, from_unit, to_unit) 'This function works by using the top number to convert to the first variable and the bottom number to convert to the unit you want
    
+ x = 0 'this is for when the conversion involves addition
     'pressure
     If unit_type = "pressure" Then
         u1 = "psi"
@@ -27,21 +28,42 @@ FFunction unit_convert(number, unit_type, from_unit, to_unit)    'This function 
             Else
                 'thermal conductivity
                 If unit_type = "thermal conductivity" Then
-                u1 = "Btu-in/hr-ft2-F"
-                v1 = 1
-                u2 = "Btu-ft/hr-ft2-F"
-                v2 = 12
-                u3 = "Btu-in/s-ft2-F"
-                v3 = 3600
-                u4 = "Btu/hr-ft-F"
-                v4 = 12
-                u5 = "W/mK"
-                v5 = 6.933471799
+                    u1 = "Btu-in/hr-ft2-F"
+                    v1 = 1
+                    u2 = "Btu-ft/hr-ft2-F"
+                    v2 = 12
+                    u3 = "Btu-in/s-ft2-F"
+                    v3 = 3600
+                    u4 = "Btu/hr-ft-F"
+                    v4 = 12
+                    u5 = "W/mK"
+                    v5 = 6.933471799
+                    
+                    Else
+                    'density
+                    If unit_type = "density" Then
+                        u1 = "lb/ft3"
+                        v1 = 1
+                        u2 = "SG_H2O"
+                        v2 = 62.4
+                        u3 = "kg/m3"
+                        v3 = 0.0624279606
+                        u4 = "g/cm3"
+                        v4 = 62.4279606
+                        If from_unit = "API" Then
+                            number = 141.5 / (number + 131.5)
+                            from_unit = "SG_H2O"
+                            u2 = "SG_H2O"
+                            v2 = 62.4
+                        End If
+   
+                    End If
+                        
+                        
                 End If
         End If
     End If
 
-    
     
     
     If from_unit = u1 Then
@@ -100,6 +122,15 @@ FFunction unit_convert(number, unit_type, from_unit, to_unit)    'This function 
         End If
     End If
     
+   If to_unit <> "API" Then
     unit_convert = number * Top / bottom
+   End If
+ 
+ If to_unit = "API" Then
+    unit_convert = 141.5 / (number * Top / 62.4) - 131.5
+ End If
+
+      
       
 End Function
+
