@@ -1,10 +1,12 @@
+How to use
+================
+
 unit_conversions
 circ_segment
 moody
 density_water
 cp_water
 cp_glycol
-================
 
 These are all the functions I've created in vba
 
