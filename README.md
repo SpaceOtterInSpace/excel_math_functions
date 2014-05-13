@@ -8,7 +8,7 @@ density_water
 cp_water
 cp_glycol
 
-These are all the functions I've created in vba
+These are all the functions I've created in vba except unit_conversion.
 
 The Engineering library is meant to hold all the functions. 
 If using, copy the engineering libraray into a module in your excel sheet.(you can get there by alt+F11)
