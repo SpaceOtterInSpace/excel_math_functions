@@ -1,48 +1,50 @@
-'This module contains all of my custom functions.
+'This module contains some engineering custom functions.
 'circ_segment
 'moody
 'density_water
 'cp_water
 'cp_glycol
-'unit_conversion
-'pipe_data
-'last updated 5-13-14 by Jacqui Nelson, Jacqnelson@gmail.com
+'nps_data
+'convert_pressure
+'convert_specific_heat
+'convert_thermal_conductivity
+'convert_density
+'last updated 5-14-14 by Jacqui Nelson, Jacqnelson@gmail.com
 
 'circ_segment
 'used to calculate a partially filled circle
 'Last updated 5-5-14
 
-Function circ_segment(output, radius, partial_area)
+Function circ_segment(pickOutput_height_arcLength, radius, partial_area)
 i = 0
 a = 0
 b = 2 * radius * 3.141592654
-s = radius * 3.141592654
+arcLength = radius * 3.141592654
 
 Do While i <= 100
     
-    Phi = s / radius
+    Phi = arcLength / radius
     
     area = (radius * radius * (Phi - Sin(Phi))) / 2
 
     If area >= partial_area Then
-        b = s
-        s = a + Abs(b - a) / 2
+        b = arcLength
+        arcLength = a + Abs(b - a) / 2
         Else
-        a = s
-        s = b - Abs(b - a) / 2
+        a = arcLength
+        arcLength = b - Abs(b - a) / 2
     End If
   
     i = i + 1
 Loop
 
-If output = "h" Then
-    circ_segment = radius - radius * Cos(s / (2 * radius))
+If pickOutput_height_arcLength = "height" Then
+    circ_segment = radius - radius * Cos(arcLength / (2 * radius))
     Else
-    If output = "s" Then
-    circ_segment = s
+    If pickOutput_height_arcLength = "arcLength" Then
+    circ_segment = arcLength
     End If
 End If
-   
 End Function
 
 'Moody
@@ -79,6 +81,7 @@ End Function
 'Density of water in imperial units or metric
 'met takes in celcius and gives kg/m3
 'imp takes in farenheit and gives lb/ft3
+'last updated 5-5-14
 
 Function Density_water(temp, unit)
 If unit = "met" Then
@@ -93,15 +96,17 @@ End Function
 'give it the temp in F and it will give you the specific heat of water in BTu/lbmF
 'I got the coefficients from charting all the numbers in excel and making a formula
 'range 50F to 500F
+'last updated 5-5-14
 
-Function cp_water(temp)
-cp_water = 0.000000002 * temp * temp * temp - 0.0000005 * temp * temp + 0.00006 * temp + 0.9961
+Function cp_water(temp_F)
+cp_water = 0.000000002 * temp_F * temp_F * temp_F - 0.0000005 * temp_F * temp_F + 0.00006 * temp_F + 0.9961
 End Function
 
 'cp_glycol
 'calculates the specific heat of glycol for a given temperature and % using the data from the DOW chemcial book
 'specific heat = A + BT +CT^2
 'for percents between (like 55) it goes down to the nearest percent (like 50)
+'last updated 5-5-14
 
 Function cp_glycol(percent, tempF)
 
@@ -119,154 +124,12 @@ cp_glycol = a(List) + b(List) * TempC + c(List) * TempC * TempC
 
 End Function
 
-'unit_conversion
-'Last updated 5-5-14
-
-
-Function unit_convert(number, unit_type, from_unit, to_unit) 'This function works by using the top number to convert to the first variable and the bottom number to convert to the unit you want
-   
- x = 0 'this is for when the conversion involves addition
-    'pressure
-    If unit_type = "pressure" Then
-        u1 = "psi"
-        v1 = 1
-        u2 = "bar"
-        v2 = 14.5033
-        u3 = "Pa"
-        v3 = 0.000145037738
-        u4 = "kPa"
-        v4 = 0.145037738
-        u5 = "inH2O"
-        v5 = 0.0361396333
-        u6 = "ftH2O"
-        v6 = 0.4335275
-    Else
-            'specific heat
-        If unit_type = "specific heat (cp)" Then
-            u1 = "Btu/lbmF"
-            v1 = 1
-            u2 = "kJ/kgK"
-            v2 = 1 / 4.1868
-            u3 = "kcal/kgC"
-            v3 = 1
-            
-            Else
-                'thermal conductivity
-                If unit_type = "thermal conductivity" Then
-                    u1 = "Btu-in/hr-ft2-F"
-                    v1 = 1
-                    u2 = "Btu-ft/hr-ft2-F"
-                    v2 = 12
-                    u3 = "Btu-in/s-ft2-F"
-                    v3 = 3600
-                    u4 = "Btu/hr-ft-F"
-                    v4 = 12
-                    u5 = "W/mK"
-                    v5 = 6.933471799
-                    
-                    Else
-                    'density
-                    If unit_type = "density" Then
-                        u1 = "lb/ft3"
-                        v1 = 1
-                        u2 = "SG_H2O"
-                        v2 = 62.4
-                        u3 = "kg/m3"
-                        v3 = 0.0624279606
-                        u4 = "g/cm3"
-                        v4 = 62.4279606
-                        If from_unit = "API*" Then 'This is just an estimate, the story of API is very complicated. This becomes more correct the closer you are to 60F
-                            number = 141.5 / (number + 131.5)
-                            from_unit = "SG_H2O"
-                            u2 = "SG_H2O"
-                            v2 = 62.4
-                        End If
-   
-                    End If
-                        
-                        
-                End If
-        End If
-    End If
-
-    
-    
-    If from_unit = u1 Then
-        Top = v1
-    Else
-        If from_unit = u2 Then
-            Top = v2
-        Else
-            If from_unit = u3 Then
-                Top = v3
-            Else
-                If from_unit = u4 Then
-                Top = v4
-                Else
-                    If from_unit = u5 Then
-                    Top = v5
-                    Else
-                        If from_unit = u6 Then
-                        Top = v6
-                        Else
-                            If from_unit = u7 Then
-                            Top = v7
-                            End If
-                        End If
-                    End If
-                End If
-            End If
-        End If
-    End If
-    
-    If to_unit = u1 Then
-        bottom = v1
-        Else
-        If to_unit = u2 Then
-            bottom = v2
-        Else
-            If to_unit = u3 Then
-            bottom = v3
-            Else
-                If to_unit = u4 Then
-                bottom = v4
-                Else
-                    If to_unit = u5 Then
-                    bottom = v5
-                    Else
-                        If to_unit = u6 Then
-                        bottom = v6
-                        Else
-                            If to_unit = u7 Then
-                            bottom = v7
-                            End If
-                        End If
-                    End If
-                End If
-            End If
-        End If
-    End If
-    
-   If to_unit <> "API*" Then
-    unit_convert = number * Top / bottom
-   End If
- 
- If to_unit = "API*" Then
-    unit_convert = 141.5 / (number * Top / 62.4) - 131.5
- End If
-
-      
-      
-End Function
-
-
-'pipe_data
+'nps_data
 'takes the nps and the schedule and will give you either OD, ID or thickness, depending on what you pick for output type.
 'data taken from edgen murry nps chart
-'I'm hoping that if it looks stupid but works then it's not stupid
-'last updated 5/13/14 by jacqui nelson
+'last updated 5/14/14 by jacqui nelson
 
-Function pipe_data(nps, schedule, output_type)
+Function nps_data(nps, schedule, output_thickness_OD_ID)
 
 If nps = 1 / 8 Then
     Thickness = Array(0.405, "x", "x", "x", 0.068, 0.068, "x", 0.095, 0.095, "x", "x", "x", "x", "x")
@@ -440,18 +303,349 @@ If schedule = 10 Then
     End If
 End If
     
-If output_type = "thickness" Then
-    pipe_data = Thickness(i)
+If output_thickness_OD_ID = "thickness" Then
+    nps_data = Thickness(i)
     Else
-    If output_type = "OD" And Thickness(i) < 5 And Thickness(i) > 0 Then
-        pipe_data = Thickness(0)
+    If output_thickness_OD_ID = "OD" And Thickness(i) < 100 And Thickness(i) > 0 Then 'the test on thickness is just to make sure it is a number and not the letter x
+        nps_data = Thickness(0)
         Else
-        If output_type = "ID" Then
-            pipe_data = Thickness(0) - 2 * Thickness(i)
+        If output_thickness_OD_ID = "ID" And Thickness(i) < 100 And Thickness(i) > 0 Then
+            nps_data = Thickness(0) - 2 * Thickness(i)
             Else
-            pipe_data = "doesn't exist"
+            nps_data = "doesn't exist"
         End If
     End If
 End If
 
+End Function
+
+'convert_pressure
+'This function works by using the top number to convert to the first variable and the bottom number to convert to the unit you want
+'last updated 5/14
+
+Function convert_pressure(number, pickFromUnit_psi_bar_Pa_kPa_inH2O_ftH2O, pickToUnit_psi_bar_Pa_kPa_inH2O_ftH2O)
+        u1 = "psi"
+        v1 = 1
+        u2 = "bar"
+        v2 = 14.5033
+        u3 = "Pa"
+        v3 = 0.000145037738
+        u4 = "kPa"
+        v4 = 0.145037738
+        u5 = "inH2O"
+        v5 = 0.0361396333
+        u6 = "ftH2O"
+        v6 = 0.4335275
+
+    If pickFromUnit_psi_bar_Pa_kPa_inH2O_ftH2O = u1 Then
+        Top = v1
+    Else
+        If pickFromUnit_psi_bar_Pa_kPa_inH2O_ftH2O = u2 Then
+            Top = v2
+        Else
+            If pickFromUnit_psi_bar_Pa_kPa_inH2O_ftH2O = u3 Then
+                Top = v3
+            Else
+                If pickFromUnit_psi_bar_Pa_kPa_inH2O_ftH2O = u4 Then
+                Top = v4
+                Else
+                    If pickFromUnit_psi_bar_Pa_kPa_inH2O_ftH2O = u5 Then
+                    Top = v5
+                    Else
+                        If pickFromUnit_psi_bar_Pa_kPa_inH2O_ftH2O = u6 Then
+                        Top = v6
+                        Else
+                            If pickFromUnit_psi_bar_Pa_kPa_inH2O_ftH2O = u7 Then
+                            Top = v7
+                            End If
+                        End If
+                    End If
+                End If
+            End If
+        End If
+    End If
+    
+    If pickToUnit_psi_bar_Pa_kPa_inH2O_ftH2O = u1 Then
+        bottom = v1
+        Else
+        If pickToUnit_psi_bar_Pa_kPa_inH2O_ftH2O = u2 Then
+            bottom = v2
+        Else
+            If pickToUnit_psi_bar_Pa_kPa_inH2O_ftH2O = u3 Then
+            bottom = v3
+            Else
+                If pickToUnit_psi_bar_Pa_kPa_inH2O_ftH2O = u4 Then
+                bottom = v4
+                Else
+                    If pickToUnit_psi_bar_Pa_kPa_inH2O_ftH2O = u5 Then
+                    bottom = v5
+                    Else
+                        If pickToUnit_psi_bar_Pa_kPa_inH2O_ftH2O = u6 Then
+                        bottom = v6
+                        Else
+                            If pickToUnit_psi_bar_Pa_kPa_inH2O_ftH2O = u7 Then
+                            bottom = v7
+                            End If
+                        End If
+                    End If
+                End If
+            End If
+        End If
+    End If
+    
+    convert_pressure = number * Top / bottom
+         
+End Function
+
+'specific heat
+'This function works by using the top number to convert to the first variable and the bottom number to convert to the unit you want
+'last updated 5-14-14
+
+Function convert_specific_heat(number, pickFromUnit_BtuperlbmF_kJperkgK_kcalperkgC, pickToUnit_BtuperlbmF_kJperkgK_kcalperkgC)
+   
+          
+
+            u1 = "Btu/lbmF"
+            v1 = 1
+            u2 = "kJ/kgK"
+            v2 = 1 / 4.1868
+            u3 = "kcal/kgC"
+            v3 = 1
+
+    If pickFromUnit_BtuperlbmF_kJperkgK_kcalperkgC = u1 Then
+        Top = v1
+    Else
+        If pickFromUnit_BtuperlbmF_kJperkgK_kcalperkgC = u2 Then
+            Top = v2
+        Else
+            If pickFromUnit_BtuperlbmF_kJperkgK_kcalperkgC = u3 Then
+                Top = v3
+            Else
+                If pickFromUnit_BtuperlbmF_kJperkgK_kcalperkgC = u4 Then
+                Top = v4
+                Else
+                    If pickFromUnit_BtuperlbmF_kJperkgK_kcalperkgC = u5 Then
+                    Top = v5
+                    Else
+                        If pickFromUnit_BtuperlbmF_kJperkgK_kcalperkgC = u6 Then
+                        Top = v6
+                        Else
+                            If pickFromUnit_BtuperlbmF_kJperkgK_kcalperkgC = u7 Then
+                            Top = v7
+                            End If
+                        End If
+                    End If
+                End If
+            End If
+        End If
+    End If
+    
+    If pickToUnit_BtuperlbmF_kJperkgK_kcalperkgC = u1 Then
+        bottom = v1
+        Else
+        If pickToUnit_BtuperlbmF_kJperkgK_kcalperkgC = u2 Then
+            bottom = v2
+        Else
+            If pickToUnit_BtuperlbmF_kJperkgK_kcalperkgC = u3 Then
+            bottom = v3
+            Else
+                If pickToUnit_BtuperlbmF_kJperkgK_kcalperkgC = u4 Then
+                bottom = v4
+                Else
+                    If pickToUnit_BtuperlbmF_kJperkgK_kcalperkgC = u5 Then
+                    bottom = v5
+                    Else
+                        If pickToUnit_BtuperlbmF_kJperkgK_kcalperkgC = u6 Then
+                        bottom = v6
+                        Else
+                            If pickToUnit_BtuperlbmF_kJperkgK_kcalperkgC = u7 Then
+                            bottom = v7
+                            End If
+                        End If
+                    End If
+                End If
+            End If
+        End If
+    End If
+    
+convert_specific_heat = number * Top / bottom
+      
+End Function
+
+
+ 'thermal conductivity
+ 'last updated 5-14-14
+ 
+Function convert_thermal_conductivity(number, pickFromUnit_BTUinperhrft2F_Btuftperhrft2F_Btuinpersft2F_BtuperhrftF_WpermK, pickToUnitBTUinperhrft2F_Btuftperhrft2F_Btuinpersft2F_BtuperhrftF_WpermK) 'This function works by using the top number to convert to the first variable and the bottom number to convert to the unit you want
+
+        
+               
+
+                    u1 = "Btuin/hrft2F"
+                    v1 = 1
+                    u2 = "Btuft/hrft2F"
+                    v2 = 12
+                    u3 = "Btuin/sft2F"
+                    v3 = 3600
+                    u4 = "Btu/hrftF"
+                    v4 = 12
+                    u5 = "W/mK"
+                    v5 = 6.933471799
+    
+    
+    If pickFromUnit_BTUinperhrft2F_Btuftperhrft2F_Btuinpersft2F_BtuperhrftF_WpermK = u1 Then
+        Top = v1
+    Else
+        If pickFromUnit_BTUinperhrft2F_Btuftperhrft2F_Btuinpersft2F_BtuperhrftF_WpermK = u2 Then
+            Top = v2
+        Else
+            If pickFromUnit_BTUinperhrft2F_Btuftperhrft2F_Btuinpersft2F_BtuperhrftF_WpermK = u3 Then
+                Top = v3
+            Else
+                If pickFromUnit_BTUinperhrft2F_Btuftperhrft2F_Btuinpersft2F_BtuperhrftF_WpermK = u4 Then
+                Top = v4
+                Else
+                    If pickFromUnit_BTUinperhrft2F_Btuftperhrft2F_Btuinpersft2F_BtuperhrftF_WpermK = u5 Then
+                    Top = v5
+                    Else
+                        If pickFromUnit_BTUinperhrft2F_Btuftperhrft2F_Btuinpersft2F_BtuperhrftF_WpermK = u6 Then
+                        Top = v6
+                        Else
+                            If pickFromUnit_BTUinperhrft2F_Btuftperhrft2F_Btuinpersft2F_BtuperhrftF_WpermK = u7 Then
+                            Top = v7
+                            End If
+                        End If
+                    End If
+                End If
+            End If
+        End If
+    End If
+    
+    If pickToUnitBTUinperhrft2F_Btuftperhrft2F_Btuinpersft2F_BtuperhrftF_WpermK = u1 Then
+        bottom = v1
+        Else
+        If pickToUnitBTUinperhrft2F_Btuftperhrft2F_Btuinpersft2F_BtuperhrftF_WpermK = u2 Then
+            bottom = v2
+        Else
+            If pickToUnitBTUinperhrft2F_Btuftperhrft2F_Btuinpersft2F_BtuperhrftF_WpermK = u3 Then
+            bottom = v3
+            Else
+                If pickToUnitBTUinperhrft2F_Btuftperhrft2F_Btuinpersft2F_BtuperhrftF_WpermK = u4 Then
+                bottom = v4
+                Else
+                    If pickToUnitBTUinperhrft2F_Btuftperhrft2F_Btuinpersft2F_BtuperhrftF_WpermK = u5 Then
+                    bottom = v5
+                    Else
+                        If pickToUnitBTUinperhrft2F_Btuftperhrft2F_Btuinpersft2F_BtuperhrftF_WpermK = u6 Then
+                        bottom = v6
+                        Else
+                            If pickToUnitBTUinperhrft2F_Btuftperhrft2F_Btuinpersft2F_BtuperhrftF_WpermK = u7 Then
+                            bottom = v7
+                            End If
+                        End If
+                    End If
+                End If
+            End If
+        End If
+    End If
+    
+  
+  convert_thermal_conductivity = number * Top / bottom
+ 
+      
+      
+End Function
+
+
+'density
+'This function works by using the top number to convert to the first variable and the bottom number to convert to the unit you want
+'last updated 5-14-14
+
+Function convert_density(number, pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API, pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API)
+   
+ x = 0 'this is for when the conversion involves addition
+
+
+                        u1 = "lb/ft3"
+                        v1 = 1
+                        u2 = "SG_H2O"
+                        v2 = 62.4
+                        u3 = "kg/m3"
+                        v3 = 0.0624279606
+                        u4 = "g/cm3"
+                        v4 = 62.4279606
+                        If pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = "API" Then 'This is just an estimate, the story of API is very complicated. This becomes more correct the closer you are to 60F
+                            number = 141.5 / (number + 131.5)
+                            pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = "SG_H2O"
+                            u2 = "SG_H2O"
+                            v2 = 62.4
+                        End If
+   
+    
+    If pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u1 Then
+        Top = v1
+    Else
+        If pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u2 Then
+            Top = v2
+        Else
+            If pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u3 Then
+                Top = v3
+            Else
+                If pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u4 Then
+                Top = v4
+                Else
+                    If pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u5 Then
+                    Top = v5
+                    Else
+                        If pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u6 Then
+                        Top = v6
+                        Else
+                            If pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u7 Then
+                            Top = v7
+                            End If
+                        End If
+                    End If
+                End If
+            End If
+        End If
+    End If
+    
+    If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u1 Then
+        bottom = v1
+        Else
+        If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u2 Then
+            bottom = v2
+        Else
+            If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u3 Then
+            bottom = v3
+            Else
+                If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u4 Then
+                bottom = v4
+                Else
+                    If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u5 Then
+                    bottom = v5
+                    Else
+                        If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u6 Then
+                        bottom = v6
+                        Else
+                            If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u7 Then
+                            bottom = v7
+                            End If
+                        End If
+                    End If
+                End If
+            End If
+        End If
+    End If
+    
+   If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API <> "API" Then
+  convert_density = number * Top / bottom
+   End If
+ 
+ If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = "API" Then
+  convert_density = 141.5 / (number * Top / 62.4) - 131.5
+ End If
+
+      
+      
 End Function
