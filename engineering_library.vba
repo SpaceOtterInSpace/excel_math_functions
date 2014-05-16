@@ -1,6 +1,9 @@
 'This module contains some engineering custom functions.
 'circ_segment
 'moody
+'This module contains some engineering custom functions.
+'circ_segment
+'moody
 'density_water
 'cp_water
 'cp_glycol
@@ -9,13 +12,14 @@
 'convert_specific_heat
 'convert_thermal_conductivity
 'convert_density
-'last updated 5-14-14 by Jacqui Nelson, Jacqnelson@gmail.com
+'div1_pressure_vessel
+'last updated 5-16-14 by Jacqui Nelson, Jacqnelson@gmail.com
 
 'circ_segment
 'used to calculate a partially filled circle
 'Last updated 5-5-14
 
-Function circ_segment(pickOutput_height_arcLength, radius, partial_area)
+Function circ_segment(radius, partial_area, pickOutput_height_arcLength)
 i = 0
 a = 0
 b = 2 * radius * 3.141592654
@@ -52,11 +56,11 @@ End Function
 'It works for Laminar, transition, and turbulent flow
 'last updated 5-5-14
 
-Function Moody(R As Double, K As Double) As Double
+Function Moody(Reynolds As Double, rel_roughness As Double) As Double
 
 Dim X1 As Double, X2 As Double, f As Double, E As Double
-X1 = K * R * 0.123968186335418
-X2 = Log(R) - 0.779397488455682
+X1 = rel_roughness * Reynolds * 0.123968186335418
+X2 = Log(Reynolds) - 0.779397488455682
 f = X2 - 0.2
 E = (Log(X1 + f) + f - X2) / (1 + X1 + f)
 f = f - (1 + X1 + f + 0.5 * E) * E * (X1 + f) / (1 + X1 + f + E * (1 + E / 3))
@@ -64,14 +68,14 @@ E = (Log(X1 + f) + f - X2) / (1 + X1 + f)
 f = f - (1 + X1 + f + 0.5 * E) * E * (X1 + f) / (1 + X1 + f + E * (1 + E / 3))
 f = 1.15129254649702 / f
 
-If R >= 4000 Then
+If Reynolds >= 4000 Then
     Moody = f * f
     Else
-    If R <= 2300 And R > 0 Then
-        Moody = 64 / R
+    If Reynolds <= 2300 And Reynolds > 0 Then
+        Moody = 64 / Reynolds
         Else
-        If R > 2300 And R < 4000 Then
-        Moody = (f * f + 64 / R) / 2
+        If Reynolds > 2300 And Reynolds < 4000 Then
+        Moody = (f * f + 64 / Reynolds) / 2
         End If
     End If
 End If
@@ -108,11 +112,11 @@ End Function
 'for percents between (like 55) it goes down to the nearest percent (like 50)
 'last updated 5-5-14
 
-Function cp_glycol(percent, tempF)
+Function cp_glycol(percent, TempF)
 
 Dim a() As Variant
 
-TempC = (tempF - 32) * 5 / 9
+TempC = (TempF - 32) * 5 / 9
 
 List = Int(percent / 10)
 
@@ -545,7 +549,7 @@ Function convert_thermal_conductivity(number, pickFromUnit_BTUinperhrft2F_Btuftp
                         End If
                     End If
                 End If
-            End If
+       End If
         End If
     End If
     
@@ -559,9 +563,9 @@ End Function
 
 'density
 'This function works by using the top number to convert to the first variable and the bottom number to convert to the unit you want
-'last updated 5-14-14
+'last updated 5-16-14
 
-Function convert_density(number, pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API, pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API)
+Function convert_density(number, pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API_SG_AIR, pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API_SG_AIR)
    
  x = 0 'this is for when the conversion involves addition
 
@@ -574,33 +578,34 @@ Function convert_density(number, pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_AP
                         v3 = 0.0624279606
                         u4 = "g/cm3"
                         v4 = 62.4279606
-                        If pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = "API" Then 'This is just an estimate, the story of API is very complicated. This becomes more correct the closer you are to 60F
+                        If pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API_SG_AIR = "API" Then 'This is just an estimate, the story of API is very complicated. This becomes more correct the closer you are to 60F
                             number = 141.5 / (number + 131.5)
-                            pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = "SG_H2O"
+                            pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API_SG_AIR = "SG_H2O"
                             u2 = "SG_H2O"
                             v2 = 62.4
                         End If
-   
+                        u5 = "SG_AIR"
+                        v5 = 0.0752256925
     
-    If pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u1 Then
+    If pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API_SG_AIR = u1 Then
         Top = v1
     Else
-        If pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u2 Then
+        If pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API_SG_AIR = u2 Then
             Top = v2
         Else
-            If pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u3 Then
+            If pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API_SG_AIR = u3 Then
                 Top = v3
             Else
-                If pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u4 Then
+                If pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API_SG_AIR = u4 Then
                 Top = v4
                 Else
-                    If pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u5 Then
+                    If pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API_SG_AIR = u5 Then
                     Top = v5
                     Else
-                        If pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u6 Then
+                        If pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API_SG_AIR = u6 Then
                         Top = v6
                         Else
-                            If pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u7 Then
+                            If pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API_SG_AIR = u7 Then
                             Top = v7
                             End If
                         End If
@@ -610,25 +615,25 @@ Function convert_density(number, pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_AP
         End If
     End If
     
-    If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u1 Then
+    If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API_SG_AIR = u1 Then
         bottom = v1
         Else
-        If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u2 Then
+        If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API_SG_AIR = u2 Then
             bottom = v2
         Else
-            If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u3 Then
+            If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API_SG_AIR = u3 Then
             bottom = v3
             Else
-                If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u4 Then
+                If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API_SG_AIR = u4 Then
                 bottom = v4
                 Else
-                    If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u5 Then
+                    If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API_SG_AIR = u5 Then
                     bottom = v5
                     Else
-                        If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u6 Then
+                        If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API_SG_AIR = u6 Then
                         bottom = v6
                         Else
-                            If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = u7 Then
+                            If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API_SG_AIR = u7 Then
                             bottom = v7
                             End If
                         End If
@@ -638,14 +643,121 @@ Function convert_density(number, pickFromUnit_lbperft3_SG_H2O_kgperm3_gpercm3_AP
         End If
     End If
     
-   If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API <> "API" Then
+   If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API_SG_AIR <> "API" Then
   convert_density = number * Top / bottom
    End If
  
- If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API = "API" Then
+ If pickToUnit_lbperft3_SG_H2O_kgperm3_gpercm3_API_SG_AIR = "API" Then
   convert_density = 141.5 / (number * Top / 62.4) - 131.5
  End If
 
       
       
+End Function
+
+'if you give it the pressure it will find you thickness and visa versa
+'the joint efficiency is usually 1
+'created 5-16-14
+
+Function div1_pressure_vessel(pickInput_Pressure_thickness, PressurePsi_thicknessin, pickInput_ID_OD, IDin_ODin, CorrosionAllowancein, StressValuePsi, jointEfficiency_useone, pickShape_shell_sphere_hemi_ellipse)
+
+diameter_type = pickInput_ID_OD
+D = IDin_ODin
+CA = CorrosionAllowancein
+S = StressValuePsi
+E = jointEfficiency_useone
+Shape = pickShape_shell_sphere_hemi_ellipse
+R = D / 2
+input_type = pickInput_Pressure_thickness
+
+If input_type = "Pressure" Then
+    P = PressurePsi_thicknessin
+    Else
+    If input_type = "thickness" Then
+    t = PressurePsi_thicknessin
+    End If
+End If
+
+'these formulas were obtained from the pressure vessel handbook 13th edition
+shellIDt = P * R / (S * E - 0.6 * P)
+shellODt = P * R / (S * E + 0.4 * P)
+shellIDP = S * E * t / (R + 0.6 * t)
+shellODP = (S * E * t) / (R - 0.4 * t)
+
+sphereIDt = (P * R) / (2 * S * E - 0.2 * P)
+sphereODt = (P * R) / (2 * S * E + 0.8 * P)
+sphereIDP = 2 * S * E * t / (R + 0.2 * t)
+sphereODP = 2 * S * E * t / (R - 0.8 * t)
+
+ellipIDt = P * D / (2 * S * E - 0.2 * P)
+ellipODt = P * D / (2 * S * E + 1.8 * P)
+ellipIDP = 2 * S * E * t / (D + 0.2 * t)
+ellipODP = 2 * S * E * t / (D - 1.8 * t)
+
+If Shape = "shell" And diameter_type = "ID" And input_type = "Pressure" Then
+ div1_pressure_vessel = shellIDt
+End If
+ 
+If Shape = "shell" And diameter_type = "OD" And input_type = "Pressure" Then
+ div1_pressure_vessel = shellODt
+End If
+
+If Shape = "shell" And diameter_type = "ID" And input_type = "thickness" Then
+ div1_pressure_vessel = shellIDP
+End If
+
+If Shape = "shell" And diameter_type = "OD" And input_type = "thickness" Then
+ div1_pressure_vessel = shellODP
+End If
+
+
+If Shape = "sphere" And diameter_type = "ID" And input_type = "Pressure" Then
+ div1_pressure_vessel = sphereIDt
+End If
+ 
+If Shape = "sphere" And diameter_type = "OD" And input_type = "Pressure" Then
+ div1_pressure_vessel = sphereODt
+End If
+
+If Shape = "sphere" And diameter_type = "ID" And input_type = "thickness" Then
+ div1_pressure_vessel = sphereIDP
+End If
+
+If Shape = "sphere" And diameter_type = "OD" And input_type = "thickness" Then
+ div1_pressure_vessel = sphereODP
+End If
+
+'the equations for sphere and hemi are the same
+If Shape = "hemi" And diameter_type = "ID" And input_type = "Pressure" Then
+ div1_pressure_vessel = sphereIDt
+End If
+ 
+If Shape = "hemi" And diameter_type = "OD" And input_type = "Pressure" Then
+ div1_pressure_vessel = sphereODt
+End If
+
+If Shape = "hemi" And diameter_type = "ID" And input_type = "thickness" Then
+ div1_pressure_vessel = sphereIDP
+End If
+
+If Shape = "hemi" And diameter_type = "OD" And input_type = "thickness" Then
+ div1_pressure_vessel = sphereODP
+End If
+
+
+If Shape = "ellipse" And diameter_type = "ID" And input_type = "Pressure" Then
+ div1_pressure_vessel = ellipIDt
+End If
+ 
+If Shape = "ellipse" And diameter_type = "OD" And input_type = "Pressure" Then
+ div1_pressure_vessel = ellipODt
+End If
+
+If Shape = "ellipse" And diameter_type = "ID" And input_type = "thickness" Then
+ div1_pressure_vessel = ellipIDP
+End If
+
+If Shape = "ellipse" And diameter_type = "OD" And input_type = "thickness" Then
+ div1_pressure_vessel = ellipODP
+End If
 End Function
