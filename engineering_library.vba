@@ -1,9 +1,6 @@
 'This module contains some engineering custom functions.
 'circ_segment
 'moody
-'This module contains some engineering custom functions.
-'circ_segment
-'moody
 'density_water
 'cp_water
 'cp_glycol
@@ -679,18 +676,18 @@ If input_type = "Pressure" Then
 End If
 
 'these formulas were obtained from the pressure vessel handbook 13th edition
-shellIDt = P * R / (S * E - 0.6 * P)
-shellODt = P * R / (S * E + 0.4 * P)
+shellIDt = P * R / (S * E - 0.6 * P) + CA
+shellODt = P * R / (S * E + 0.4 * P) + CA
 shellIDP = S * E * t / (R + 0.6 * t)
 shellODP = (S * E * t) / (R - 0.4 * t)
 
-sphereIDt = (P * R) / (2 * S * E - 0.2 * P)
-sphereODt = (P * R) / (2 * S * E + 0.8 * P)
+sphereIDt = (P * R) / (2 * S * E - 0.2 * P) + CA
+sphereODt = (P * R) / (2 * S * E + 0.8 * P) + CA
 sphereIDP = 2 * S * E * t / (R + 0.2 * t)
 sphereODP = 2 * S * E * t / (R - 0.8 * t)
 
-ellipIDt = P * D / (2 * S * E - 0.2 * P)
-ellipODt = P * D / (2 * S * E + 1.8 * P)
+ellipIDt = P * D / (2 * S * E - 0.2 * P) + CA
+ellipODt = P * D / (2 * S * E + 1.8 * P) + CA
 ellipIDP = 2 * S * E * t / (D + 0.2 * t)
 ellipODP = 2 * S * E * t / (D - 1.8 * t)
 
@@ -761,3 +758,4 @@ If Shape = "ellipse" And diameter_type = "OD" And input_type = "thickness" Then
  div1_pressure_vessel = ellipODP
 End If
 End Function
+
