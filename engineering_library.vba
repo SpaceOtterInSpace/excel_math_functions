@@ -654,108 +654,170 @@ End Function
 
 'if you give it the pressure it will find you thickness and visa versa
 'the joint efficiency is usually 1
-'created 5-16-14
+'created 5-17-14
 
-Function div1_pressure_vessel(pickInput_Pressure_thickness, PressurePsi_thicknessin, pickInput_ID_OD, IDin_ODin, CorrosionAllowancein, StressValuePsi, jointEfficiency_useone, pickShape_shell_sphere_hemi_ellipse)
+Function div1_pressure_withOD(thicknessin, ODin, allowableStressPsi, jointEfficiency_useone, pickShape_shell_sphere_hemi_ellipse)
 
-diameter_type = pickInput_ID_OD
-D = IDin_ODin
-CA = CorrosionAllowancein
-S = StressValuePsi
+D = ODin
+S = allowableStressPsi
 E = jointEfficiency_useone
 Shape = pickShape_shell_sphere_hemi_ellipse
 R = D / 2
-input_type = pickInput_Pressure_thickness
-
-If input_type = "Pressure" Then
-    P = PressurePsi_thicknessin
-    Else
-    If input_type = "thickness" Then
-    t = PressurePsi_thicknessin
-    End If
-End If
+t = thicknessin
 
 'these formulas were obtained from the pressure vessel handbook 13th edition
-shellIDt = P * R / (S * E - 0.6 * P) + CA
-shellODt = P * R / (S * E + 0.4 * P) + CA
-shellIDP = S * E * t / (R + 0.6 * t)
 shellODP = (S * E * t) / (R - 0.4 * t)
-
-sphereIDt = (P * R) / (2 * S * E - 0.2 * P) + CA
-sphereODt = (P * R) / (2 * S * E + 0.8 * P) + CA
-sphereIDP = 2 * S * E * t / (R + 0.2 * t)
 sphereODP = 2 * S * E * t / (R - 0.8 * t)
-
-ellipIDt = P * D / (2 * S * E - 0.2 * P) + CA
-ellipODt = P * D / (2 * S * E + 1.8 * P) + CA
-ellipIDP = 2 * S * E * t / (D + 0.2 * t)
 ellipODP = 2 * S * E * t / (D - 1.8 * t)
 
-If Shape = "shell" And diameter_type = "ID" And input_type = "Pressure" Then
- div1_pressure_vessel = shellIDt
-End If
- 
-If Shape = "shell" And diameter_type = "OD" And input_type = "Pressure" Then
- div1_pressure_vessel = shellODt
+'shell
+If Shape = "shell" Then
+ div1_pressure_withOD = shellODP
 End If
 
-If Shape = "shell" And diameter_type = "ID" And input_type = "thickness" Then
- div1_pressure_vessel = shellIDP
+'sphere
+If Shape = "sphere" Then
+ div1_pressure_withOD = sphereODP
 End If
 
-If Shape = "shell" And diameter_type = "OD" And input_type = "thickness" Then
- div1_pressure_vessel = shellODP
-End If
-
-
-If Shape = "sphere" And diameter_type = "ID" And input_type = "Pressure" Then
- div1_pressure_vessel = sphereIDt
-End If
- 
-If Shape = "sphere" And diameter_type = "OD" And input_type = "Pressure" Then
- div1_pressure_vessel = sphereODt
-End If
-
-If Shape = "sphere" And diameter_type = "ID" And input_type = "thickness" Then
- div1_pressure_vessel = sphereIDP
-End If
-
-If Shape = "sphere" And diameter_type = "OD" And input_type = "thickness" Then
- div1_pressure_vessel = sphereODP
-End If
-
+'hemi
 'the equations for sphere and hemi are the same
-If Shape = "hemi" And diameter_type = "ID" And input_type = "Pressure" Then
- div1_pressure_vessel = sphereIDt
-End If
- 
-If Shape = "hemi" And diameter_type = "OD" And input_type = "Pressure" Then
- div1_pressure_vessel = sphereODt
+If Shape = "hemi" Then
+ div1_pressure_withOD = sphereODP
 End If
 
-If Shape = "hemi" And diameter_type = "ID" And input_type = "thickness" Then
- div1_pressure_vessel = sphereIDP
+'ellipse
+If Shape = "ellipse" Then
+ div1_pressure_withOD = ellipODP
 End If
 
-If Shape = "hemi" And diameter_type = "OD" And input_type = "thickness" Then
- div1_pressure_vessel = sphereODP
-End If
-
-
-If Shape = "ellipse" And diameter_type = "ID" And input_type = "Pressure" Then
- div1_pressure_vessel = ellipIDt
-End If
- 
-If Shape = "ellipse" And diameter_type = "OD" And input_type = "Pressure" Then
- div1_pressure_vessel = ellipODt
-End If
-
-If Shape = "ellipse" And diameter_type = "ID" And input_type = "thickness" Then
- div1_pressure_vessel = ellipIDP
-End If
-
-If Shape = "ellipse" And diameter_type = "OD" And input_type = "thickness" Then
- div1_pressure_vessel = ellipODP
-End If
 End Function
+
+'finds the thickness using ASME div1 rules
+'the joint efficiency is usually 1
+'updated 5-17-14
+
+Function div1_thickness_withOD(PressurePsi, ODin, CorrosionAllowancein, allowableStressPsi, jointEfficiency_useone, pickShape_shell_sphere_hemi_ellipse)
+
+D = ODin
+CA = CorrosionAllowancein
+S = allowableStressPsi
+E = jointEfficiency_useone
+Shape = pickShape_shell_sphere_hemi_ellipse
+R = D / 2
+p = PressurePsi
+
+'these formulas were obtained from the pressure vessel handbook 13th edition
+shellODt = p * R / (S * E + 0.4 * p) + CA
+sphereODt = (p * R) / (2 * S * E + 0.8 * p) + CA
+ellipODt = p * D / (2 * S * E + 1.8 * p) + CA
+
+'shell
+If Shape = "shell" Then
+ div1_thickness_withOD = shellODt
+End If
+
+'sphere
+If Shape = "sphere" Then
+ div1_thickness_withOD = sphereODt
+End If
+
+'hemi
+'the equations for sphere and hemi are the same
+If Shape = "hemi" Then
+ div1_thickness_withOD = sphereODt
+End If
+
+'ellipse
+If Shape = "ellipse" Then
+ div1_thickness_withOD = ellipODt
+End If
+
+End Function
+
+'if you give it the pressure it will find you thickness and visa versa
+'the joint efficiency is usually 1
+'created 5-17-14
+
+Function div1_pressure_withID(thicknessin, IDin, allowableStressPsi, jointEfficiency_useone, pickShape_shell_sphere_hemi_ellipse)
+
+D = IDin
+S = allowableStressPsi
+E = jointEfficiency_useone
+Shape = pickShape_shell_sphere_hemi_ellipse
+R = D / 2
+t = thicknessin
+
+'these formulas were obtained from the pressure vessel handbook 13th edition
+shellIDP = S * E * t / (R + 0.6 * t)
+sphereIDP = 2 * S * E * t / (R + 0.2 * t)
+ellipIDP = 2 * S * E * t / (D + 0.2 * t)
+
+'shell
+If Shape = "shell" Then
+ div1_pressure_withID = shellIDP
+End If
+
+'sphere
+If Shape = "sphere" Then
+ div1_pressure_withID = sphereIDP
+End If
+
+'hemi
+'the equations for sphere and hemi are the same
+If Shape = "hemi" Then
+ div1_pressure_withID = sphereIDP
+End If
+
+'ellipse
+If Shape = "ellipse" Then
+ div1_pressure_withID = ellipIDP
+End If
+
+End Function
+
+'finds the thickness using ASME div1 rules
+'the joint efficiency is usually 1
+'updated 5-17-14
+
+Function div1_thickness_withID(PressurePsi, IDin, CorrosionAllowancein, allowableStressPsi, jointEfficiency_useone, pickShape_shell_sphere_hemi_ellipse)
+
+D = IDin
+CA = CorrosionAllowancein
+S = allowableStressPsi
+E = jointEfficiency_useone
+Shape = pickShape_shell_sphere_hemi_ellipse
+R = D / 2
+p = PressurePsi
+
+'these formulas were obtained from the pressure vessel handbook 13th edition
+shellIDt = p * R / (S * E - 0.6 * p) + CA
+sphereIDt = (p * R) / (2 * S * E - 0.2 * p) + CA
+ellipIDt = p * D / (2 * S * E - 0.2 * p) + CA
+
+'shell
+If Shape = "shell" Then
+ div1_thickness_withID = shellIDt
+End If
+ 
+'sphere
+If Shape = "sphere" Then
+ div1_thickness_withID = sphereIDt
+End If
+
+'hemi
+'the equations for sphere and hemi are the same
+If Shape = "hemi" Then
+ div1_thickness_withID = sphereIDt
+End If
+
+'ellipse
+If Shape = "ellipse" Then
+ div1_thickness_withID = ellipIDt
+End If
+
+End Function
+
+
+
 
