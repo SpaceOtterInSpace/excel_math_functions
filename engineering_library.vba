@@ -658,17 +658,24 @@ End Function
 'vessel_pressure_withOD
 'last updated 5/27/14
 
-Function vessel_pressure_withOD(thicknessin, ODin, allowableStressPsi, jointEfficiency, pickShape_shell_sphere_hemi_ellipse, pick_div1_div2)
+Function vessel_pressure_withOD(thicknessin, ODin, allowableStressPsi, jointEfficiency, pickShape_shell_sphere_hemi_ellipse_FandD, pick_div1_div2, FandDonly_crownRadiusin, FandDonly_knuckleRadiusin, FandDonly_modulusofelasticityPsi)
 
 D = ODin
 S = allowableStressPsi
 E = jointEfficiency
-Shape = pickShape_shell_sphere_hemi_ellipse
+Shape = pickShape_shell_sphere_hemi_ellipse_FandD
 R = D / 2
 t = thicknessin
 division = pick_div1_div2
 pressure = "error"
-
+L = FandDonly_crownRadiusin
+knuckle = FandDonly_knuckleRadiusin
+ET = FandDonly_modulusofelasticityPsi
+If Shape <> "FandD" Then
+    knuckle = 100
+    L = 102
+    ET = 103
+End If
 
 'these formulas were obtained from the pressure vessel handbook 13th edition
 'div1
@@ -676,10 +683,70 @@ shellODP = (S * E * t) / (R - 0.4 * t)
 sphereODP = 2 * S * E * t / (R - 0.8 * t)
 ellipODP = 2 * S * E * t / (D - 1.8 * t)
 
-'div2
+'I used data from the pressure vessel handbook and excel to generate a function that would relate M to the ratio of L to knuckle radius(r) It's within 0.02
+M = -0.0017 * (L / knuckle) ^ 2 + 0.0765 * (L / knuckle) + 0.9586
+FandDODP = 2 * S * E * t / (M * L - t * (M - 0.2))
+
+'div2 2010
 shellODP_div2 = S * E * Log(2 * t / (D - 2 * t) + 1)
 sphereODP_div2 = S * E / 0.5 * Log(2 * t / (D - 2 * t) + 1)
 ellipODP_div2 = "further calculations required"
+FandDODP_div2 = "further calculations required"
+
+'div2 FandD 2010***********************************************************************************************
+
+
+    BTheta = Application.Acos((0.5 * D - knuckle) / (L - knuckle))
+    phiTheta = (L * t) ^ 0.5 / knuckle
+
+    If phiTheta < BTheta Then
+        RTheta = (0.5 * (D - 2 * t) - knuckle) / (Application.Cos(BTheta - phiTheta)) + knuckle
+        Else
+        If phiTheta >= BTheta Then
+            RTheta = 0.5 * (D - 2 * t)
+        End If
+    End If
+    
+    If knuckle / (D - 2 * t) <= 0.08 Then
+        Cone = 9.31 * (knuckle / (D - 2 * t)) - 0.086
+        Ctwo = 1.25
+        Else
+        If knuckle / (D - 2 * t) > 0.08 Then
+            Cone = 0.692 * (knuckle / (D - 2 * t)) + 0.605
+            Ctwo = 1.46 - 2.6 * (knuckle / (D - 2 * t))
+        End If
+    End If
+
+    'Cthree = S is only true if the the allowable stress at the design temperature is governed by time-independent properties
+    Cthree = S
+
+    Peth = Cone * ET * t ^ 2 / (Ctwo * RTheta * (RTheta / 2 - knuckle))
+    Py = Cthree * t / (Ctwo * RTheta * (RTheta / (2 * knuckle) - 1))
+
+    G = Peth / Py
+
+    If G <= 1 Then
+        Pck = 0.6 * Peth
+        Else
+        If G > 1 Then
+            Pck = (0.77508 * G - 0.20354 * G ^ 2 + 0.019274 * G ^ 3) / (1 + 0.19014 * G - 0.089534 * G ^ 2 + 0.0093965 * G ^ 3) * Py
+        End If
+    End If
+
+    'The allowable pressure based on buckling failure of the knuckle
+    Pak = Pck / 1.5
+
+    'The allowable pressure based on rupture of the crown
+    Pac = 2 * S * E / (L / t + 0.5)
+
+    If L / (D - 2 * t) >= 0.7 And L / (D - 2 * t) <= 1 And knuckle / (D - 2 * t) >= 0.06 And L / t >= 20 And L / t <= 2000 Then
+        FandDODP_div2 = Application.Min(Pak, Pac)
+        Else
+        FandDODP_div2 = "Use part 5 calculations from Division 2"
+    End If
+'div2 FandD 2010*******************************************************************************
+
+
 
 
 'shell
@@ -715,6 +782,16 @@ If Shape = "ellipse" And division = "div2" Then
  pressure = ellipODP_div2
 End If
 
+'FandD
+'the pressure vessel hand book gives two equations for div1, but if you manually calculate M then these equations are identical
+If Shape = "FandD" And division = "div1" Then
+    pressure = FandDODP
+End If
+If Shape = "FandD" And division = "div2" Then
+    pressure = FandDODP_div2
+End If
+
+
 vessel_pressure_withOD = pressure
 
 End Function
@@ -723,27 +800,43 @@ End Function
 'the joint efficiency is usually 1
 'updated 5-27-14
 
-Function vessel_thickness_withOD(PressurePsi, ODin, CorrosionAllowancein, allowableStressPsi, jointEfficiency, pickShape_shell_sphere_hemi_ellipse, pick_div1_div2)
+Function vessel_thickness_withOD(PressurePsi, ODin, CorrosionAllowancein, allowableStressPsi, jointEfficiency, pickShape_shell_sphere_hemi_ellipse_FandD, pick_div1_div2, FandDonly_crownRadiusin, FandDonly_knuckleRadiusin)
+
 
 D = ODin
 CA = CorrosionAllowancein
 S = allowableStressPsi
 E = jointEfficiency
-Shape = pickShape_shell_sphere_hemi_ellipse
+Shape = pickShape_shell_sphere_hemi_ellipse_FandD
 R = D / 2
 p = PressurePsi
 division = pick_div1_div2
+Thickness = "error"
+L = FandDonly_crownRadiusin
+knuckle = FandDonly_knuckleRadiusin
+If Shape <> "FandD" Then
+    knuckle = 1
+    L = 1
+    ET = 1
+End If
+
 
 'these formulas were obtained from the pressure vessel handbook 13th edition
 'div1
 shellODt = p * R / (S * E + 0.4 * p) + CA
 sphereODt = (p * R) / (2 * S * E + 0.8 * p) + CA
 ellipODt = p * D / (2 * S * E + 1.8 * p) + CA
+'I used data from the pressure vessel handbook and excel to generate a function that would relate M to the ratio of L to knuckle radius(r) It's within 0.02
+M = -0.0017 * (L / knuckle) ^ 2 + 0.0765 * (L / knuckle) + 0.9586
+FandDODt = p * L * M / (2 * S * E + p * (M - 0.2)) + CA
 
-'div2
+
+'div2 2010
 shellODt_div2 = D / (2 * 2.7182818 ^ (p / (S * E))) * (2.7182818 ^ (p / (S * E)) - 1) + CA
 sphereODt_div2 = D / (2 * 2.7182818 ^ (0.5 * p / (S * E))) * (2.7182818 ^ (0.5 * p / (S * E)) - 1)
 ellipODt_div2 = "further calculations required"
+FandDODt_div2 = "further calculations required"
+
 
 'shell
 If Shape = "shell" And division = "div1" Then
@@ -778,6 +871,15 @@ If Shape = "ellipse" And division = "div2" Then
  Thickness = ellipODt_div2
 End If
 
+'FandD
+'the pressure vessel hand book gives two equations for div1, but if you manually calculate M then these equations are identical
+If Shape = "FandD" And division = "div1" Then
+    Thickness = FandDODt
+End If
+If Shape = "FandD" And division = "div2" Then
+    Thickness = FandDODt_div2
+End If
+
 vessel_thickness_withOD = Thickness
 
 End Function
@@ -786,27 +888,90 @@ End Function
 'the joint efficiency is usually 1
 'created 5-27-14
 
-Function vessel_pressure_withID(thicknessin, IDin, allowableStressPsi, jointEfficiency, pickShape_shell_sphere_hemi_ellipse, pick_div1_div2)
+Function vessel_pressure_withID(thicknessin, IDin, allowableStressPsi, jointEfficiency, pickShape_shell_sphere_hemi_ellipse_FandD, pick_div1_div2, FandDonly_crownRadiusin, FandDonly_knuckleRadiusin, FandDonly_modulusofelasticityPsi)
 
 D = IDin
 S = allowableStressPsi
 E = jointEfficiency
-Shape = pickShape_shell_sphere_hemi_ellipse
+Shape = pickShape_shell_sphere_hemi_ellipse_FandD
 R = D / 2
 t = thicknessin
 pressure = "error"
 division = pick_div1_div2
+L = FandDonly_crownRadiusin
+knuckle = FandDonly_knuckleRadiusin
+ET = FandDonly_modulusofelasticityPsi
+If Shape <> "FandD" Then
+    knuckle = 1
+    L = 1
+    ET = 1
+End If
 
 'these formulas were obtained from the pressure vessel handbook 13th edition
 'div1
 shellIDP = S * E * t / (R + 0.6 * t)
 sphereIDP = 2 * S * E * t / (R + 0.2 * t)
 ellipIDP = 2 * S * E * t / (D + 0.2 * t)
+'I used data from the pressure vessel handbook and excel to generate a function that would relate M to the ratio of L to knuckle radius(r) It's within 0.02
+M = -0.0017 * (L / knuckle) ^ 2 + 0.0765 * (L / knuckle) + 0.9586
+FandDIDP = 2 * S * E * t / (L * M + 0.2 * t)
 
-'div2
+'div2 2010
 shellIDP_div2 = S * E * Log(2 * t / D + 1)
 sphereIDP_div2 = S * E / 0.5 * Log(2 * t / D + 1)
 ellipIDP_div2 = "further calculations required"
+FandDIDP_div2 = "further calculations required"
+
+'div2 FandD 2010***********************************************************************************************
+BTheta = Application.Acos((0.5 * D - knuckle) / (L - knuckle))
+phiTheta = (L * t) ^ 0.5 / knuckle
+
+If phiTheta < BTheta Then
+    RTheta = (0.5 * D - knuckle) / (Application.Cos(BTheta - phiTheta)) + knuckle
+    Else
+    If phiTheta >= BTheta Then
+        RTheta = 0.5 * D
+    End If
+End If
+    
+If knuckle / D <= 0.08 Then
+    Cone = 9.31 * (knuckle / D) - 0.086
+    Ctwo = 1.25
+    Else
+    If knuckle / D > 0.08 Then
+        Cone = 0.692 * (knuckle / D) + 0.605
+        Ctwo = 1.46 - 2.6 * (knuckle / D)
+    End If
+End If
+
+'Cthree = S is only true if the the allowable stress at the design temperature is governed by time-independent properties
+Cthree = S
+
+Peth = Cone * ET * t ^ 2 / (Ctwo * RTheta * (RTheta / 2 - knuckle))
+Py = Cthree * t / (Ctwo * RTheta * (RTheta / (2 * knuckle) - 1))
+
+G = Peth / Py
+
+If G <= 1 Then
+    Pck = 0.6 * Peth
+    Else
+    If G > 1 Then
+        Pck = (0.77508 * G - 0.20354 * G ^ 2 + 0.019274 * G ^ 3) / (1 + 0.19014 * G - 0.089534 * G ^ 2 + 0.0093965 * G ^ 3) * Py
+    End If
+End If
+
+'The allowable pressure based on buckling failure of the knuckle
+Pak = Pck / 1.5
+
+'The allowable pressure based on rupture of the crown
+Pac = 2 * S * E / (L / t + 0.5)
+
+If L / D >= 0.7 And L / D <= 1 And knuckle / D >= 0.06 And L / t >= 20 And L / t <= 2000 Then
+    FandDIDP_div2 = Application.Min(Pak, Pac)
+    Else
+    FandDIDP_div2 = "Use part 5 calculations from Division 2"
+End If
+'div2 FandD 2010*******************************************************************************
 
 'shell
 If Shape = "shell" And division = "div1" Then
@@ -841,6 +1006,15 @@ If Shape = "ellipse" And division = "div2" Then
  pressure = ellipIDP_div2
 End If
 
+'FandD
+'the pressure vessel hand book gives two equations for div1, but if you manually calculate M (like I did) then these equations are identical
+If Shape = "FandD" And division = "div1" Then
+    pressure = FandDIDP
+End If
+If Shape = "FandD" And division = "div2" Then
+    pressure = FandDIDP_div2
+End If
+
 vessel_pressure_withID = pressure
 
 End Function
@@ -849,28 +1023,40 @@ End Function
 'the joint efficiency is usually 1
 'updated 5-27-14
 
-Function vessel_thickness_withID(PressurePsi, IDin, CorrosionAllowancein, allowableStressPsi, jointEfficiency, pickShape_shell_sphere_hemi_ellipse, pick_div1_div2)
+Function vessel_thickness_withID(PressurePsi, IDin, CorrosionAllowancein, allowableStressPsi, jointEfficiency, pickShape_shell_sphere_hemi_ellipse_FandD, pick_div1_div2, FandDonly_crownRadiusin, FandDonly_knuckleRadiusin)
 
 D = IDin
 CA = CorrosionAllowancein
 S = allowableStressPsi
 E = jointEfficiency
-Shape = pickShape_shell_sphere_hemi_ellipse
+Shape = pickShape_shell_sphere_hemi_ellipse_FandD
 R = D / 2
 p = PressurePsi
 Thickness = "error"
 division = pick_div1_div2
+L = FandDonly_crownRadiusin
+knuckle = FandDonly_knuckleRadiusin
+If Shape <> "FandD" Then
+    knuckle = 1
+    L = 1
+    ET = 1
+End If
+
 
 'these formulas were obtained from the pressure vessel handbook 13th edition
 'div1
 shellIDt = p * R / (S * E - 0.6 * p) + CA
 sphereIDt = (p * R) / (2 * S * E - 0.2 * p) + CA
 ellipIDt = p * D / (2 * S * E - 0.2 * p) + CA
+'I used data from the pressure vessel handbook and excel to generate a function that would relate M to the ratio of L to knuckle radius(r) It's within 0.02
+M = -0.0017 * (L / knuckle) ^ 2 + 0.0765 * (L / knuckle) + 0.9586
+FandDIDt = p * L * M / (2 * S * E - 0.2 * p)
 
-'div2
+'div2 2010
 shellIDt_div2 = D / 2 * (2.7182818 ^ (p / (S * E)) - 1)
 sphereIDt_div2 = D / 2 * (2.7182818 ^ (0.5 * p / (S * E)) - 1)
 ellipIDt_div2 = "further calculations required"
+FandDIDt_div2 = "further calculations required"
 
 'shell
 If Shape = "shell" And division = "div1" Then
@@ -904,6 +1090,17 @@ End If
 If Shape = "ellipse" And division = "div2" Then
 Thickness = ellipIDt_div2
 End If
+
+'FandD
+'the pressure vessel hand book gives two equations for div1, but if you manually calculate M (like I did) then these equations are identical
+If Shape = "FandD" And division = "div1" Then
+    Thickness = FandDIDt
+End If
+If Shape = "FandD" And division = "div2" Then
+    Thickness = FandDIDt_div2
+End If
+
 vessel_thickness_withID = Thickness
 
 End Function
+
