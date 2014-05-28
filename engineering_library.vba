@@ -673,10 +673,15 @@ L = FandDCrownRadiusin_or_ellipseHeightin
 knuckle = FandDonly_knuckleRadiusin
 ET = FandDandEllipseDiv2Only_modulusofelasticityPsi
 K = 0
-If Shape <> "FandD" Then
+
+If Shape <> "FandD" And Shape <> "ellipse" Then
     knuckle = 8 'These numbers are not used if the shape is not FandD but the program wont compile unless they are realistic
     L = 54
     ET = 28200000
+    Else
+    If division = "div1" Then
+        ET = 28200000
+    End If
 End If
 If Shape = "ellipse" Then
     h = FandDCrownRadiusin_or_ellipseHeightin
@@ -828,10 +833,14 @@ division = pick_div1_div2
 Thickness = "error"
 L = FandDonly_crownRadiusin
 knuckle = FandDonly_knuckleRadiusin
-If Shape <> "FandD" Then
+If Shape <> "FandD" And Shape <> "ellipse" Then
     knuckle = 8 'These numbers are not used if the shape is not FandD but the program wont compile unless they are realistic
     L = 54
     ET = 28200000
+    Else
+    If division = "div1" Then
+        ET = 28200000
+    End If
 End If
 
 
@@ -847,7 +856,7 @@ FandDODt = p * L * M / (2 * S * E + p * (M - 0.2)) + CA
 
 'div2 2010
 shellODt_div2 = D / (2 * 2.7182818 ^ (p / (S * E))) * (2.7182818 ^ (p / (S * E)) - 1) + CA
-sphereODt_div2 = D / (2 * 2.7182818 ^ (0.5 * p / (S * E))) * (2.7182818 ^ (0.5 * p / (S * E)) - 1)
+sphereODt_div2 = D / (2 * 2.7182818 ^ (0.5 * p / (S * E))) * (2.7182818 ^ (0.5 * p / (S * E)) - 1) + CA
 ellipODt_div2 = "further calculations required"
 FandDODt_div2 = "further calculations required"
 
@@ -916,10 +925,14 @@ L = FandDCrownRadiusin_or_ellipseHeightin
 knuckle = FandDonly_knuckleRadiusin
 ET = FandDandEllipseDiv2Only_modulusofelasticityPsi
 K = 0
-If Shape <> "FandD" Then
+If Shape <> "FandD" And Shape <> "ellipse" Then
     knuckle = 8 'These numbers are not used if the shape is not FandD but the program wont compile unless they are realistic
     L = 54
     ET = 28200000
+    Else
+    If division = "div1" Then
+        ET = 28200000
+    End If
 End If
 If Shape = "ellipse" Then
     h = FandDCrownRadiusin_or_ellipseHeightin
@@ -1050,7 +1063,7 @@ End Function
 'the joint efficiency is usually 1
 'updated 5-27-14
 
-Function vessel_thickness_withID(PressurePsi, IDin, CorrosionAllowancein, allowableStressPsi, jointEfficiency, pickShape_shell_sphere_hemi_ellipse_FandD, pick_div1_div2, FandDCrownRadiusin_or_ellipHeightin, FandDonly_knuckleRadiusin)
+Function vessel_thickness_withID(PressurePsi, IDin, CorrosionAllowancein, allowableStressPsi, jointEfficiency, pickShape_shell_sphere_hemi_ellipse_FandD, pick_div1_div2, FandDCrownRadiusin_or_ellipHeightin, FandDonly_knuckleRadiusin, FandDandEllipseDiv2Only_modulusofelasticityPsi)
 
 D = IDin
 CA = CorrosionAllowancein
@@ -1063,10 +1076,15 @@ Thickness = "error"
 division = pick_div1_div2
 L = FandDCrownRadiusin_or_ellipHeightin
 knuckle = FandDonly_knuckleRadiusin
-If Shape <> "FandD" Then
+ET = FandDandEllipseDiv2Only_modulusofelasticityPsi
+If Shape <> "FandD" And Shape <> "ellipse" Then
     knuckle = 8 'These numbers are not used if the shape is not FandD but the program wont compile unless they are realistic
     L = 54
     ET = 28200000
+    Else
+    If division = "div1" Then
+        ET = 28200000
+    End If
 End If
 If Shape = "ellipse" Then
     h = FandDCrownRadiusin_or_ellipHeightin
@@ -1083,13 +1101,97 @@ sphereIDt = (p * R) / (2 * S * E - 0.2 * p) + CA
 ellipIDt = p * D / (2 * S * E - 0.2 * p) + CA
 'I used data from the pressure vessel handbook and excel to generate a function that would relate M to the ratio of L to knuckle radius(r) It's within 0.02
 M = -0.0017 * (L / knuckle) ^ 2 + 0.0765 * (L / knuckle) + 0.9586
-FandDIDt = p * L * M / (2 * S * E - 0.2 * p)
+FandDIDt = p * L * M / (2 * S * E - 0.2 * p) + CA
 
 'div2 2010
-shellIDt_div2 = D / 2 * (2.7182818 ^ (p / (S * E)) - 1)
-sphereIDt_div2 = D / 2 * (2.7182818 ^ (0.5 * p / (S * E)) - 1)
+shellIDt_div2 = D / 2 * (2.7182818 ^ (p / (S * E)) - 1) + CA
+sphereIDt_div2 = D / 2 * (2.7182818 ^ (0.5 * p / (S * E)) - 1) + CA
 ellipIDt_div2 = "further calculations required"
 FandDIDt_div2 = "further calculations required"
+
+'div2 FandD and ellipse 2010***********************************************************************************************
+t = shellIDt - CA 'just a good starting off point
+a = 0
+b = 2 * t
+i = 0
+pressure = p
+Do While i <= 100
+
+BTheta = Application.Acos((0.5 * D - knuckle) / (L - knuckle))
+phiTheta = (L * t) ^ 0.5 / knuckle
+
+If phiTheta < BTheta Then
+    RTheta = (0.5 * D - knuckle) / (Application.Cos(BTheta - phiTheta)) + knuckle
+    Else
+    If phiTheta >= BTheta Then
+        RTheta = 0.5 * D
+    End If
+End If
+    
+If knuckle / D <= 0.08 Then
+    Cone = 9.31 * (knuckle / D) - 0.086
+    Ctwo = 1.25
+    Else
+    If knuckle / D > 0.08 Then
+        Cone = 0.692 * (knuckle / D) + 0.605
+        Ctwo = 1.46 - 2.6 * (knuckle / D)
+    End If
+End If
+
+'Cthree = S is only true if the the allowable stress at the design temperature is governed by time-independent properties
+Cthree = S
+
+Peth = Cone * ET * t ^ 2 / (Ctwo * RTheta * (RTheta / 2 - knuckle))
+Py = Cthree * t / (Ctwo * RTheta * (RTheta / (2 * knuckle) - 1))
+
+G = Peth / Py
+
+If G <= 1 Then
+    Pck = 0.6 * Peth
+    Else
+    If G > 1 Then
+        Pck = (0.77508 * G - 0.20354 * G ^ 2 + 0.019274 * G ^ 3) / (1 + 0.19014 * G - 0.089534 * G ^ 2 + 0.0093965 * G ^ 3) * Py
+    End If
+End If
+
+'The allowable pressure based on buckling failure of the knuckle
+Pak = Pck / 1.5
+
+'The allowable pressure based on rupture of the crown
+Pac = 2 * S * E / (L / t + 0.5)
+
+If Shape = "FandD" And L / D >= 0.7 And L / D <= 1 And knuckle / D >= 0.06 And L / t >= 20 And L / t <= 2000 Then
+    FandDIDP_div2 = Application.Min(Pak, Pac)
+    pressure = FandDIDP_div2
+    Else
+    FandDIDP_div2 = "Use part 5 calculations from Division 2"
+    pressure = FandDIDP_div2
+End If
+
+If Shape = "ellipse" And K >= 1.7 And K <= 2.2 Then
+    ellipIDP_div2 = Application.Min(Pak, Pac)
+    pressure = ellipIDP_div2
+    Else
+    ellipIDP_div2 = "Use part 5 calculations from Division 2"
+    pressure = ellipIDP_div2
+End If
+
+If pressure >= p Then
+    b = t
+    t = a + Abs(b - a) / 2
+    Else
+    If pressure < p Then
+        a = t
+        t = b - Abs(b - a) / 2
+    End If
+End If
+
+i = i + 1
+Loop
+
+
+'div2 FandD and ellipse 2010*******************************************************************************
+
 
 'shell
 If Shape = "shell" And division = "div1" Then
@@ -1136,4 +1238,3 @@ End If
 vessel_thickness_withID = Thickness
 
 End Function
-
